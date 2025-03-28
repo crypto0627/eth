@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "eth-global-taipei-team-3p",
   "private": true,
   "scripts": {
     "build": "turbo run build",
