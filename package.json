@@ -16,5 +16,15 @@
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "none",
+    "semi": false,
+    "useTabs": false,
+    "tabWidth": 2,
+    "bracketSpacing": true,
+    "bracketSameLine": false,
+    "arrowParens": "always"
   }
 }
