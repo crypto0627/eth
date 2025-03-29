@@ -9,6 +9,7 @@ import { ArrowDownToLine, ArrowUpToLine, Repeat, Coins, Github, Twitter, DiscIco
 import { Badge } from "@/components/ui/badge"
 import TransactionHistory from "@/components/home/transaction-history"
 import ChainBalance from "@/components/home/chain-balance"
+import Link from 'next/link'
 
 export default function Home() {
   const account = useAccount()
@@ -75,9 +76,11 @@ export default function Home() {
                 <span>Swap</span>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <Button variant="outline" className="h-8 w-8 flex items-center justify-center bg-white border-cyan-500/30 hover:bg-white text-cyan-300 rounded-xl">
-                  <Coins className="h-5 w-5" />
-                </Button>
+                <Link href="/microloans">
+                  <Button variant="outline" className="h-8 w-8 flex items-center justify-center bg-white border-cyan-500/30 hover:bg-white text-cyan-300 rounded-xl">
+                    <Coins className="h-5 w-5" />
+                  </Button>
+                </Link>
                 <span>Microloans</span>
               </div>
             </div>
