@@ -93,7 +93,6 @@ export default class MCPClient {
       } catch (error: any) {
         lastError = error;
         
-        // 只有在特定錯誤碼時才重試
         if (error?.status === 529 || error?.code === 529) {
           console.log(
             `${context} - Attempt ${attempt} failed. Retrying in ${
@@ -102,8 +101,7 @@ export default class MCPClient {
           );
           
           await this.delay(currentDelay);
-          
-          // 計算下一次延遲時間（指數退避）
+
           currentDelay = Math.min(
             currentDelay * 2,
             this.retryConfig.maxDelay
@@ -111,7 +109,6 @@ export default class MCPClient {
           continue;
         }
         
-        // 其他錯誤直接拋出
         throw error;
       }
     }
@@ -220,7 +217,6 @@ export default class MCPClient {
 
 async function main() {
     if (process.argv.length < 3) {
-      console.log("Usage: node index.ts /Users/jakekuo/Desktop/web3-workspace/eth-global-taipei-team-3p/apps/mcp-server/build/index.js");
       return;
     }
     const mcpClient = new MCPClient();

@@ -1,60 +1,32 @@
 import { NextResponse } from 'next/server';
+import { LoanProtocol } from '@/types'
 
-/**
- * Interface for the loan pool data returned by the API
- */
-interface LoanPool {
-  chain: string;
-  project: string;
-  symbol: string;
-  tvlUsd: number;
-  apy: number;
-  apyBase: number;
-  apyReward: number;
-  stablecoin: boolean;
-  poolMeta?: string;
-  riskLevel?: string;
-}
-
-/**
- * Fetches yield data for USDC pools from DeFi Llama API
- * Returns the top 3 APY pools from each of Base, Ethereum, and Avalanche chains
- * Only returns pools where symbol is exactly "USDC" (not pairs like KET-USDC)
- * Also categorizes pools by risk level based on TVL and APY
- * @returns {Promise<NextResponse>} JSON response with the top USDC pools from each chain
- */
 export async function GET() {
   try {
-    // Fetch data from DeFi Llama API
-    const response = await fetch('https://yields.llama.fi/pools');
-    
+    const response = await fetch('https://yields.llama.fi/pools', {
+      next: { revalidate: 7200 } // Cache data for 2 hours instead of 1
+    });
+
     if (!response.ok) {
       throw new Error(`Failed to fetch data: ${response.status}`);
     }
-    
+
     const data = await response.json();
+    const targetChains = ['Base', 'Ethereum', 'Avalanche'];
+    const targetSymbol = 'USDC';
     
-    // Filter pools where symbol is exactly "USDC" and chain is Base, Ethereum, or Avalanche
-    const filteredPools = data.data.filter((pool: any) => 
-      pool.symbol === 'USDC' && 
-      (pool.chain === 'Base' || pool.chain === 'Ethereum' || pool.chain === 'Avalanche')
-    );
-    
-    // Map to a more concise format with relevant information
-    const formattedPools: LoanPool[] = filteredPools.map((pool: any) => {
-      // Determine risk level based on TVL and APY
-      let riskLevel = '';
-      if (pool.tvlUsd > 100000000) { // TVL > 100M
-        riskLevel = 'Low Risk';
-      } else if (pool.tvlUsd > 10000000 && pool.apy >= 5 && pool.apy <= 30) { // TVL > 10M, APY between 5% and 30%
-        riskLevel = 'Medium Risk';
-      } else if (pool.tvlUsd < 10000000 && pool.apy > 50) { // TVL < 10M, APY > 50%
-        riskLevel = 'High Risk';
-      } else {
-        riskLevel = 'Medium Risk'; // Default for pools that don't fit the criteria
-      }
+    // Create a Map for faster chain lookups
+    const targetChainsSet = new Set(targetChains);
+
+    // Optimize filtering and mapping in a single pass
+    const poolsByChain = new Map<string, LoanProtocol[]>();
+    targetChains.forEach(chain => poolsByChain.set(chain, []));
+
+    // Process data in a single loop with early termination conditions
+    for (const pool of data.data) {
+      if (pool.symbol !== targetSymbol || !targetChainsSet.has(pool.chain)) continue;
       
-      return {
+      const formattedPool: LoanProtocol = {
         chain: pool.chain,
         project: pool.project,
         symbol: pool.symbol,
@@ -64,40 +36,27 @@ export async function GET() {
         apyReward: pool.apyReward || 0,
         stablecoin: pool.stablecoin,
         poolMeta: pool.poolMeta,
-        riskLevel: riskLevel
+        riskLevel: determineRiskLevelFast(pool.tvlUsd, pool.apy)
       };
-    });
-    
-    // Group pools by chain
-    const poolsByChain: Record<string, LoanPool[]> = {
-      'Base': [],
-      'Ethereum': [],
-      'Avalanche': []
-    };
-    
-    formattedPools.forEach(pool => {
-      if (poolsByChain[pool.chain]) {
-        poolsByChain[pool.chain].push(pool);
-      }
-    });
-    
-    // Get the top 3 APY pools from each chain
-    const topPools: LoanPool[] = [];
-    
-    for (const chain of ['Base', 'Ethereum', 'Avalanche']) {
-      if (poolsByChain[chain].length > 0) {
-        // Sort by APY in descending order and take the top 3
-        const chainTopPools = poolsByChain[chain].sort((a, b) => b.apy - a.apy).slice(0, 3);
-        topPools.push(...chainTopPools);
-      }
+
+      const chainPools = poolsByChain.get(pool.chain)!;
+      chainPools.push(formattedPool);
     }
     
-    // Sort the final result by APY in descending order
-    const sortedPools = topPools.sort((a, b) => b.apy - a.apy);
+    // Sort each chain's pools and take top 3
+    const topPools: LoanProtocol[] = [];
+    poolsByChain.forEach(pools => {
+      // Sort in-place for better performance
+      pools.sort((a, b) => b.apy - a.apy);
+      topPools.push(...pools.slice(0, 4));
+    });
+    
+    // Final sort by APY
+    topPools.sort((a, b) => b.apy - a.apy);
     
     return NextResponse.json({
       status: 'success',
-      data: sortedPools
+      data: topPools
     });
     
   } catch (error) {
@@ -112,4 +71,12 @@ export async function GET() {
       { status: 500 }
     );
   }
+}
+
+// Risk distribution
+function determineRiskLevelFast(tvlUsd: number, apy: number): string {
+  if (tvlUsd > 100000000) return 'Low Risk';
+  if (tvlUsd < 10000000 && apy > 50) return 'High Risk';
+  if (tvlUsd > 10000000 && apy >= 5 && apy <= 30) return 'Medium Risk';
+  return 'Medium Risk';
 }

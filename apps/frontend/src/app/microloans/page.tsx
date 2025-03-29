@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,20 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import McpQuery from '@/components/loan/McpQuery'
+import { LoanProtocol } from '@/types'
 
-interface LoanProtocol {
-  chain: string
-  project: string
-  symbol: string
-  apy: number
-  apyBase: number
-  apyReward: number
-  tvlUsd: number
-  poolMeta?: string
-  riskLevel: string
-  stablecoin: boolean
-}
 
 export default function MicroloansPage() {
   const [amount, setAmount] = useState<string>('100')
@@ -38,7 +26,7 @@ export default function MicroloansPage() {
       console.log(data)
       if (data.status === 'success') {
         // Get top 3 protocols by APY
-        setProtocols(data.data.slice(0, 3))
+        setProtocols(data.data.slice(0, 11))
       }
     } catch (error) {
       console.error('Error fetching loan protocols:', error)
@@ -101,15 +89,12 @@ export default function MicroloansPage() {
               <Sparkles className="mr-2 h-4 w-4" />
               AI Recommend Best Rates
             </Button>
-
-            <h1 className="text-2xl font-bold mb-8">MCP Query Interface</h1>
-            <McpQuery />
           </CardContent>
         </Card>
 
         {isLoading && (
           <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
+            {[protocols.length].map((i) => (
               <Card key={i} className="w-full">
                 <CardHeader>
                   <Skeleton className="h-6 w-1/3" />

@@ -220,7 +220,6 @@ class MCPClient {
 
 async function main() {
     if (process.argv.length < 3) {
-      console.log("Usage: node index.ts /Users/jakekuo/Desktop/web3-workspace/eth-global-taipei-team-3p/apps/mcp-server/build/index.js");
       return;
     }
     const mcpClient = new MCPClient();
