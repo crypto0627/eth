@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'
 import { LoanProtocol } from '@/types'
+
+export const runtime = "edge"
 
 export async function GET() {
   try {
@@ -25,7 +27,7 @@ export async function GET() {
     // Process data in a single loop with early termination conditions
     for (const pool of data.data) {
       if (pool.symbol !== targetSymbol || !targetChainsSet.has(pool.chain)) continue;
-      
+
       const formattedPool: LoanProtocol = {
         chain: pool.chain,
         project: pool.project,
