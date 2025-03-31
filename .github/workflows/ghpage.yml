@@ -1,0 +1,41 @@
+name: CI/CD Frontend
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  build-frontend:
+    name: Build Frontend
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build frontend
+        run: pnpm run pages:build
+        working-directory: apps/frontend
+      
+      - name: Deploy frontend
+        run: pnpm run pages:deploy
+        working-directory: apps/frontend

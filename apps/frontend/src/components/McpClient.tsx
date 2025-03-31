@@ -75,7 +75,7 @@ export default function McpClient() {
         
         setResponseReady(true);
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
