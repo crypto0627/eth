@@ -1,5 +1,5 @@
 {
-  "name": "eth-global-taipei-team-3p",
+  "name": "eth",
   "private": true,
   "scripts": {
     "build": "turbo run build",

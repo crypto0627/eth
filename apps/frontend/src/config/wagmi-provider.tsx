@@ -24,8 +24,8 @@ import {
 const config = getDefaultConfig({
   appName: 'ethglobal',
   projectId: '4b5d5c41d68a989e0efe55cc8955e940',
-  chains: [sepolia, celoAlfajores, polygonMumbai, arbitrumSepolia, polygonMumbai, mainnet, base, baseSepolia],
-  ssr: true, // If your dApp uses server side rendering (SSR)
+  chains: [sepolia, celoAlfajores, arbitrumSepolia, polygonMumbai, mainnet, base, baseSepolia],
+  ssr: true,
 });
 
 const queryClient = new QueryClient();
