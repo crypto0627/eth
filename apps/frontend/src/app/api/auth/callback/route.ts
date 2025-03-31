@@ -1,6 +1,7 @@
-// 文件: app/api/auth/callback/route.ts
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+
+export const runtime = 'edge';
 
 // OAuth 配置
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';

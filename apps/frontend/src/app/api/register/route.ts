@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
 
 // Global client ID cache

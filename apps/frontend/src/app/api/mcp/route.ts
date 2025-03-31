@@ -2,6 +2,8 @@ import { experimental_createMCPClient, streamText } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { cookies } from 'next/headers';
 
+export const runtime = "edge"
+
 // OAuth configuration
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
 const OAUTH_REDIRECT_URI = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback`;

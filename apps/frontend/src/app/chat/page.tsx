@@ -1,4 +1,3 @@
-// 文件: app/page.tsx
 import McpClient from '@/components/McpClient';
 
 export default function Home() {
