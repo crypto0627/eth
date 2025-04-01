@@ -9,6 +9,22 @@ const OAUTH_REDIRECT_URI = 'https://eth-frontend.vercel.app/api/auth/callback';
 // Client ID for OAuth
 const CLIENT_ID = 'DR7fyY0aU6qcxqD0';
 
+export function errorHandler(error: unknown) {
+  if (error == null) {
+    return 'unknown error';
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return JSON.stringify(error);
+}
+
 export async function POST(req: Request) {
   console.log('MCP api is called')
   const { prompt } = await req.json();
@@ -53,7 +69,7 @@ export async function POST(req: Request) {
       console.log('Streaming response created successfully', response.toDataStreamResponse());
       
       // 返回響應前添加調試信息
-      const streamResponse = response.toDataStreamResponse();
+      const streamResponse = response.toDataStreamResponse({ getErrorMessage: errorHandler });
       console.log('Response status:', streamResponse.status);
       console.log('Response headers:', Object.fromEntries(streamResponse.headers.entries()));
       
@@ -97,14 +113,6 @@ export async function POST(req: Request) {
       }, { status: 401 });
     }
     
-    // Handle SSE specific errors
-    if (error.message?.includes('An error occurred') || 
-        (typeof error === 'string' && error.includes('An error occurred'))) {
-      return Response.json({ 
-        error: "mcp_server_error",
-        message: "The MCP server encountered an error processing your request."
-      }, { status: 500 });
-    }
     
     return new Response(`Internal Server Error: ${error.message || 'Unknown error'}`, { status: 500 });
   }
