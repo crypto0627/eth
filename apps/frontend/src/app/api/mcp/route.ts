@@ -12,135 +12,102 @@ const OAUTH_REDIRECT_URI = 'https://eth-frontend.vercel.app/api/auth/callback';
 const CLIENT_ID = 'DR7fyY0aU6qcxqD0';
 
 export async function POST(req: Request) {
-  console.log('MCP api is called');
+  console.log('MCP api is called')
+  const { prompt } = await req.json();
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('cf_access_token')?.value;
   
+  if (!accessToken) {
+    return Response.json({ 
+      error: "authentication_required",
+      authUrl: `${MCP_SERVER_URL}/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(OAUTH_REDIRECT_URI)}&response_type=code`
+    }, { status: 401 });
+  }
+  console.log(cookieStore.get('cf_access_token')?.value)
   try {
-    const { prompt } = await req.json();
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get('cf_access_token')?.value;
+    const sseClient = await experimental_createMCPClient({
+      transport: {
+        type: 'sse',
+        url: `${MCP_SERVER_URL}/sse`,
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+      },
+    });
+    const toolSet = await sseClient.tools();
+    console.log('Available tools:', toolSet);
     
-    console.log('Access token exists:', !!accessToken);
-    if (!accessToken) {
-      console.log('No access token found, redirecting to auth');
+    try {
+      // 添加更多日誌來調試
+      console.log('Sending prompt to model:', prompt.substring(0, 100) + '...');
+      
+      const response = streamText({
+        model: anthropic('claude-3-7-sonnet-20250219'),
+        tools: toolSet,
+        prompt,
+        onFinish: () => {
+          console.log('Stream finished');
+          sseClient.close();
+        },
+      });
+      
+      // 不要嘗試直接記錄 Reader 對象
+      console.log('Streaming response created successfully');
+      
+      // 返回響應前添加調試信息
+      const streamResponse = response.toDataStreamResponse();
+      console.log('Response status:', streamResponse.status);
+      console.log('Response headers:', Object.fromEntries(streamResponse.headers.entries()));
+      
+      return streamResponse;
+    } catch (streamError) {
+      console.error('Error during streaming:', streamError);
+      sseClient.close();
+      
+      // 更詳細地記錄錯誤
+      if (streamError instanceof Error) {
+        console.error('Error name:', streamError.name);
+        console.error('Error message:', streamError.message);
+        console.error('Error stack:', streamError.stack);
+      } else {
+        console.error('Non-Error object thrown:', typeof streamError, streamError);
+      }
+      
+      // 檢查是否為 SSE 特定錯誤格式
+      if (typeof streamError === 'string' && streamError.includes('An error occurred')) {
+        const errorParts = streamError.split(':');
+        return Response.json({ 
+          error: "mcp_stream_error",
+          code: errorParts[0],
+          message: errorParts[1] || "Unknown streaming error"
+        }, { status: 500 });
+      }
+      
+      throw streamError; // 重新拋出以便外層 catch 處理
+    }
+  } catch (error) {
+    console.error('Error details:', error);
+    
+    // Handle token errors
+    if (error.response?.status === 401 || error.message?.includes('unauthorized')) {
+      cookieStore.delete('cf_access_token');
+      cookieStore.delete('cf_refresh_token');
+      
       return Response.json({ 
-        error: "authentication_required",
+        error: "token_expired",
         authUrl: `${MCP_SERVER_URL}/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(OAUTH_REDIRECT_URI)}&response_type=code`
       }, { status: 401 });
     }
     
-    try {
-      // Create MCP client with more detailed error handling
-      console.log('Creating MCP client');
-      const sseClient = await experimental_createMCPClient({
-        transport: {
-          type: 'sse',
-          url: `${MCP_SERVER_URL}/sse`,
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Origin': 'https://eth-frontend.vercel.app',
-          },
-        },
-      });
-      
-      const toolSet = await sseClient.tools();
-      try {
-        console.log('Creating stream response');
-        
-        // Add timeout to ensure we don't hang indefinitely
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timed out after 30 seconds')), 30000);
-        });
-        
-        const streamPromise = streamText({
-          model: anthropic('claude-3-7-sonnet-20250219'),
-          tools: toolSet,
-          prompt,
-        });
-        
-        // Race the stream against the timeout
-        const response: any = await Promise.race([streamPromise, timeoutPromise]) as ReturnType<typeof streamText>;
-        
-        // Create headers with CORS support
-        const headers = new Headers({
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache, no-transform',
-          'Connection': 'keep-alive',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          'X-Accel-Buffering': 'no'
-        });
-        
-        // Get the stream response with enhanced headers
-        const streamResponse = new Response(response.toReadableStream(), {
-          headers: headers
-        });
-        
-        console.log('Response created successfully with status:', streamResponse.status);
-        return streamResponse;
-      } catch (streamError) {
-        console.error('Error during streaming:', streamError);
-        if (sseClient) sseClient.close();
-        
-        // Handle specific streaming errors
-        const errorMessage = streamError instanceof Error ? streamError.message : String(streamError);
-        console.error('Error message:', errorMessage);
-        
-        // Check for SSE specific error patterns
-        if (errorMessage.includes('An error occurred') || errorMessage.includes('SSE')) {
-          return new Response(JSON.stringify({ 
-            error: "mcp_stream_error",
-            message: "Error in SSE stream: " + errorMessage
-          }), { 
-            status: 500,
-            headers: {
-              'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*'
-            }
-          });
-        }
-        
-        throw streamError; // Re-throw for outer catch
-      }
-    } catch (clientError) {
-      console.error('MCP client error:', clientError);
-      
-      // Handle token errors
-      if (clientError.response?.status === 401 || 
-          String(clientError).includes('unauthorized') || 
-          String(clientError).includes('401')) {
-        
-        console.log('Authentication error detected, clearing tokens');
-        // Force token refresh
-        cookieStore.delete('cf_access_token');
-        cookieStore.delete('cf_refresh_token');
-        
-        return Response.json({ 
-          error: "token_expired",
-          message: "Authentication token expired or invalid",
-          authUrl: `${MCP_SERVER_URL}/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(OAUTH_REDIRECT_URI)}&response_type=code`
-        }, { status: 401 });
-      }
-      
-      throw clientError; // Re-throw for outer catch
+    // Handle SSE specific errors
+    if (error.message?.includes('An error occurred') || 
+        (typeof error === 'string' && error.includes('An error occurred'))) {
+      return Response.json({ 
+        error: "mcp_server_error",
+        message: "The MCP server encountered an error processing your request."
+      }, { status: 500 });
     }
-  } catch (error) {
-    console.error('General API error:', error);
     
-    // Format the error for frontend consumption
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorName = error instanceof Error ? error.name : 'UnknownError';
-    
-    return new Response(JSON.stringify({ 
-      error: "mcp_api_error",
-      type: errorName,
-      message: errorMessage
-    }), { 
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
+    return new Response(`Internal Server Error: ${error.message || 'Unknown error'}`, { status: 500 });
   }
 }
