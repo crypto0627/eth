@@ -228,10 +228,11 @@ export default new OAuthProvider({
 	authorizeEndpoint: "/authorize",
 	tokenEndpoint: "/token",
 	clientRegistrationEndpoint: "/register",
-	allowedRedirectUris: ['*'],
-	corsOrigins: ['*'],
-	sseOptions: {
-		heartbeatInterval: 30000,
-		connectionTimeout: 120000,
+	// Add CORS headers for HTTPS requests
+	corsHeaders: {
+		"Access-Control-Allow-Origin": "*",
+		"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+		"Access-Control-Allow-Headers": "Content-Type, Authorization",
+		"Access-Control-Max-Age": "86400"
 	}
 });
