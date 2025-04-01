@@ -14,6 +14,7 @@ export async function POST(req: Request) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get('cf_access_token')?.value;
   
+  
   if (!accessToken) {
     return Response.json({ 
       error: "authentication_required",
@@ -29,9 +30,8 @@ export async function POST(req: Request) {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
-      },
+      }
     });
-    
     const toolSet = await sseClient.tools();
     
     const response = await streamText({
@@ -43,6 +43,8 @@ export async function POST(req: Request) {
     
     return response.toDataStreamResponse();
   } catch (error) {
+    console.error('Error details:', error);
+    
     // Handle token errors
     if (error.response?.status === 401 || error.message?.includes('unauthorized')) {
       cookieStore.delete('cf_access_token');
@@ -52,6 +54,15 @@ export async function POST(req: Request) {
         error: "token_expired",
         authUrl: `${MCP_SERVER_URL}/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(OAUTH_REDIRECT_URI)}&response_type=code`
       }, { status: 401 });
+    }
+    
+    // Handle SSE specific errors
+    if (error.message?.includes('An error occurred') || 
+        (typeof error === 'string' && error.includes('An error occurred'))) {
+      return Response.json({ 
+        error: "mcp_server_error",
+        message: "The MCP server encountered an error processing your request."
+      }, { status: 500 });
     }
     
     return new Response(`Internal Server Error: ${error.message || 'Unknown error'}`, { status: 500 });
