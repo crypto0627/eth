@@ -9,22 +9,6 @@ const OAUTH_REDIRECT_URI = 'https://eth-frontend.vercel.app/api/auth/callback';
 // Client ID for OAuth
 const CLIENT_ID = 'DR7fyY0aU6qcxqD0';
 
-export function errorHandler(error: unknown) {
-  if (error == null) {
-    return 'unknown error';
-  }
-
-  if (typeof error === 'string') {
-    return error;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return JSON.stringify(error);
-}
-
 export async function POST(req: Request) {
   console.log('MCP api is called')
   const { prompt } = await req.json();
@@ -116,4 +100,20 @@ export async function POST(req: Request) {
     
     return new Response(`Internal Server Error: ${error.message || 'Unknown error'}`, { status: 500 });
   }
+}
+
+function errorHandler(error: unknown) {
+  if (error == null) {
+    return 'unknown error';
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return JSON.stringify(error);
 }
