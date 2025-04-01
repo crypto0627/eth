@@ -4,24 +4,25 @@ import { cookies } from 'next/headers';
 
 // OAuth configuration
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
-const OAUTH_REDIRECT_URI = 'https://eth-frontend.vercel.app/api/auth/callback';
+const OAUTH_REDIRECT_URI = 'http://localhost:3001/api/auth/callback';
 
 // Client ID for OAuth
-const CLIENT_ID = 'DR7fyY0aU6qcxqD0';
+const CLIENT_ID = 'nr6juLFC8fDKPeyx';
 
 export async function POST(req: Request) {
+  console.log('MCP api is called')
   const { prompt } = await req.json();
   const cookieStore = await cookies();
   const accessToken = cookieStore.get('cf_access_token')?.value;
   
-  
+  console.log(accessToken)
   if (!accessToken) {
     return Response.json({ 
       error: "authentication_required",
       authUrl: `${MCP_SERVER_URL}/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(OAUTH_REDIRECT_URI)}&response_type=code`
     }, { status: 401 });
   }
-  
+  console.log(cookieStore.get('cf_access_token')?.value)
   try {
     const sseClient = await experimental_createMCPClient({
       transport: {
@@ -29,8 +30,8 @@ export async function POST(req: Request) {
         url: `${MCP_SERVER_URL}/sse`,
         headers: {
           'Authorization': `Bearer ${accessToken}`
-        }
-      }
+        },
+      },
     });
     const toolSet = await sseClient.tools();
     
