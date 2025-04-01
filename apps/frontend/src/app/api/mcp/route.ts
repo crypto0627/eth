@@ -35,15 +35,34 @@ export async function POST(req: Request) {
       },
     });
     const toolSet = await sseClient.tools();
-    console.log(toolSet)
-    const response = await streamText({
-      model: anthropic('claude-3-7-sonnet-20250219'),
-      tools: toolSet,
-      prompt,
-      onFinish: () => sseClient.close(),
-    });
-    console.log(response.toDataStreamResponse())
-    return response.toDataStreamResponse();
+    console.log('Available tools:', toolSet);
+    
+    try {
+      const response = await streamText({
+        model: anthropic('claude-3-7-sonnet-20250219'),
+        tools: toolSet,
+        prompt,
+        onFinish: () => sseClient.close(),
+      });
+      
+      console.log('Streaming response created successfully');
+      return response.toDataStreamResponse();
+    } catch (streamError) {
+      console.error('Error during streaming:', streamError);
+      sseClient.close();
+      
+      // 檢查是否為 SSE 特定錯誤格式
+      if (typeof streamError === 'string' && streamError.includes('An error occurred')) {
+        const errorParts = streamError.split(':');
+        return Response.json({ 
+          error: "mcp_stream_error",
+          code: errorParts[0],
+          message: errorParts[1] || "Unknown streaming error"
+        }, { status: 500 });
+      }
+      
+      throw streamError; // 重新拋出以便外層 catch 處理
+    }
   } catch (error) {
     console.error('Error details:', error);
     
