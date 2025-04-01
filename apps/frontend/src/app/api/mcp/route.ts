@@ -3,8 +3,8 @@ import { anthropic } from '@ai-sdk/anthropic';
 import { cookies } from 'next/headers';
 
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
-const OAUTH_REDIRECT_URI = 'https://eth-frontend.vercel.app/api/auth/callback';
-const CLIENT_ID = 'DR7fyY0aU6qcxqD0';
+const OAUTH_REDIRECT_URI = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback`;
+const CLIENT_ID: string = process.env.MCP_CLIENT_ID ?? '';
 
 export async function POST(req: Request) {
   const { prompt } = await req.json();

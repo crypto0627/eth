@@ -3,11 +3,32 @@
 import { useState } from 'react';
 import { useChat } from '@ai-sdk/react';
 
+interface Message {
+  messageId?: string;
+  role: string;
+  content: string;
+  toolCallId?: string;
+  toolName?: string;
+  args?: any;
+  result?: {
+    content: Array<{
+      type: string;
+      text: string;
+    }>;
+  };
+  finishReason?: string;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+  };
+  isContinued?: boolean;
+}
+
 export default function McpClient() {
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
-  
-  const { messages, input, setInput } = useChat();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,11 +55,22 @@ export default function McpClient() {
           throw new Error(`Request failed with status ${res.status}`);
         }
       }
+
+      const data = await res.json();
+      setMessages(prev => [...prev, {
+        role: 'user',
+        content: input
+      }, {
+        role: 'assistant',
+        content: data.result?.content[0]?.text || 'No content available',
+        ...data
+      }]);
+      setInput('');
+
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
-      // Give a small delay to ensure data is loaded
       setTimeout(() => setDataLoading(false), 500);
     }
   };
