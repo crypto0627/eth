@@ -64,6 +64,13 @@ export default function McpClient() {
             const chunk = decoder.decode(value, { stream: true });
             console.log(`Received chunk #${chunkCount}:`, chunk.substring(0, 50) + (chunk.length > 50 ? '...' : ''));
             text += chunk;
+            
+            // Check for error message in the stream
+            if (text.includes('"An error occurred."')) {
+              console.error('MCP server returned an error in the stream');
+              throw new Error('The MCP server encountered an error processing your request.');
+            }
+            
             setResponse(text);
             
             try {
