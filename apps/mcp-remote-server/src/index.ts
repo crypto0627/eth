@@ -228,14 +228,8 @@ export default new OAuthProvider({
 	authorizeEndpoint: "/authorize",
 	tokenEndpoint: "/token",
 	clientRegistrationEndpoint: "/register",
-	allowedRedirectUris: [
-		'http://localhost:3001/api/auth/callback',
-		'https://eth-frontend.vercel.app/api/auth/callback'
-	],
-	corsOrigins: [
-		'http://localhost:3001',
-		'https://eth-frontend.vercel.app'
-	],
+	allowedRedirectUris: ['*'],
+	corsOrigins: ['*'],
 	sseOptions: {
 		heartbeatInterval: 30000,
 		connectionTimeout: 120000,
