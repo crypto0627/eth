@@ -38,18 +38,40 @@ export async function POST(req: Request) {
     console.log('Available tools:', toolSet);
     
     try {
-      const response = await streamText({
+      // 添加更多日誌來調試
+      console.log('Sending prompt to model:', prompt.substring(0, 100) + '...');
+      
+      const response = streamText({
         model: anthropic('claude-3-7-sonnet-20250219'),
         tools: toolSet,
         prompt,
-        onFinish: () => sseClient.close(),
+        onFinish: () => {
+          console.log('Stream finished');
+          sseClient.close();
+        },
       });
       
+      // 不要嘗試直接記錄 Reader 對象
       console.log('Streaming response created successfully');
-      return response.toDataStreamResponse();
+      
+      // 返回響應前添加調試信息
+      const streamResponse = response.toDataStreamResponse();
+      console.log('Response status:', streamResponse.status);
+      console.log('Response headers:', Object.fromEntries(streamResponse.headers.entries()));
+      
+      return streamResponse;
     } catch (streamError) {
       console.error('Error during streaming:', streamError);
       sseClient.close();
+      
+      // 更詳細地記錄錯誤
+      if (streamError instanceof Error) {
+        console.error('Error name:', streamError.name);
+        console.error('Error message:', streamError.message);
+        console.error('Error stack:', streamError.stack);
+      } else {
+        console.error('Non-Error object thrown:', typeof streamError, streamError);
+      }
       
       // 檢查是否為 SSE 特定錯誤格式
       if (typeof streamError === 'string' && streamError.includes('An error occurred')) {
