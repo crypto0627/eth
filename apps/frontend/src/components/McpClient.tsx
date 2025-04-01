@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useChat } from '@ai-sdk/react';
 
 interface Message {
   messageId?: string;
@@ -82,9 +81,6 @@ export default function McpClient() {
       }
 
       setMessages(prev => [...prev, {
-        role: 'user',
-        content: input
-      }, {
         role: 'assistant',
         content: streamingContent
       }]);
@@ -136,20 +132,10 @@ export default function McpClient() {
         </button>
       </form>
 
-      {/* Display streaming content */}
-      {streamingContent && (
-        <div className="mb-4 p-4 bg-gray-100 rounded-md">
-          <pre className="whitespace-pre-wrap">{streamingContent}</pre>
-        </div>
-      )}
-      
-      {/* Display chat messages */}
-      {messages.map((message, index) => (
-        <div key={index} className="border p-4 rounded-md bg-gray-50 mb-2">
-          <div className="font-semibold">{message.role === 'user' ? 'You:' : 'Assistant:'}</div>
-          <pre className="whitespace-pre-wrap">{message.content}</pre>
-        </div>
-      ))}
+      {/* Display response data */}
+      <div className="p-4 bg-gray-100 rounded-md">
+        <pre className="whitespace-pre-wrap">{streamingContent}</pre>
+      </div>
     </div>
   );
 }

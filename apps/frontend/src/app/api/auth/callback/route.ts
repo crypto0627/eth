@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 
-// OAuth 配置
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
 const OAUTH_CLIENT_ID: string = process.env.MCP_CLIENT_ID ?? '';
 const OAUTH_REDIRECT_URI = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback`;
-
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -22,7 +20,6 @@ export async function GET(request: Request) {
       redirect_uri: OAUTH_REDIRECT_URI
     });
     
-    // 直接使用授權碼，不進行額外處理
     const tokenResponse = await fetch(`${MCP_SERVER_URL}/token`, {
       method: 'POST',
       headers: {
@@ -37,17 +34,14 @@ export async function GET(request: Request) {
       }).toString(),
     });
     
-    // 檢查響應狀態
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error(`Token exchange failed: Status ${tokenResponse.status}, Response: ${errorText}`);
-      // 返回更詳細的錯誤信息
       return NextResponse.redirect(
         new URL(`/?error=token_exchange_failed&status=${tokenResponse.status}&details=${encodeURIComponent(errorText)}`, request.url)
       );
     }
     
-    // 解析令牌數據
     let tokenData;
     try {
       tokenData = await tokenResponse.json();
@@ -58,10 +52,9 @@ export async function GET(request: Request) {
     
     const { access_token, refresh_token, expires_in } = tokenData;
     
-    // 創建重定向響應
+    // redirect to chat page
     const response = NextResponse.redirect(new URL('/chat', request.url));
     
-    // 簡化 cookie 設置
     response.headers.set(
       'Set-Cookie', 
       `cf_access_token=${access_token}; Path=/; HttpOnly; Secure; Max-Age=${expires_in}`
@@ -77,7 +70,6 @@ export async function GET(request: Request) {
     return response;
   } catch (error) {
     console.error('OAuth error:', error);
-    // 返回更詳細的錯誤信息
     return NextResponse.redirect(
       new URL(`/?error=oauth_failure&message=${encodeURIComponent(String(error))}`, request.url)
     );
