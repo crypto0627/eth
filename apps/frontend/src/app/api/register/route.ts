@@ -19,9 +19,9 @@ export async function GET() {
     }
     
     const registrationData = {
-      redirect_uris: ['https://ethglobal-tpe.pages.dev/api/auth/callback'],
+      redirect_uris: ['https://eth-frontend.vercel.app/api/auth/callback'],
       client_name: "Next.js MCP Client",
-      client_uri: 'https://ethglobal-tpe.pages.dev/',
+      client_uri: 'https://eth-frontend.vercel.app/',
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],
       token_endpoint_auth_method: "none"

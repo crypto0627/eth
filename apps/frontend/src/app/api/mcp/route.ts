@@ -4,10 +4,10 @@ import { cookies } from 'next/headers';
 
 // OAuth configuration
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
-const OAUTH_REDIRECT_URI = 'https://ethglobal-tpe.pages.dev/api/auth/callback';
+const OAUTH_REDIRECT_URI = 'https://eth-frontend.vercel.app/api/auth/callback';
 
 // Client ID for OAuth
-const CLIENT_ID = 'plh3kJVTXu8kZFDI';
+const CLIENT_ID = 'DR7fyY0aU6qcxqD0';
 
 export async function POST(req: Request) {
   const { prompt } = await req.json();
