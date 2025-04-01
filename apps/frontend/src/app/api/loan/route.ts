@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import { LoanProtocol } from '@/types'
 
-export const runtime = "edge"
-
 export async function GET() {
   try {
     const response = await fetch('https://yields.llama.fi/pools', {

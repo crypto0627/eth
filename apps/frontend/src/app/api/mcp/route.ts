@@ -2,14 +2,12 @@ import { experimental_createMCPClient, streamText } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { cookies } from 'next/headers';
 
-export const runtime = "edge"
-
 // OAuth configuration
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
-const OAUTH_REDIRECT_URI = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback`;
+const OAUTH_REDIRECT_URI = 'https://ethglobal-tpe.pages.dev/api/auth/callback';
 
 // Client ID for OAuth
-const CLIENT_ID = process.env.MCP_CLIENT_ID || 'default-client-id';
+const CLIENT_ID = 'plh3kJVTXu8kZFDI';
 
 export async function POST(req: Request) {
   const { prompt } = await req.json();

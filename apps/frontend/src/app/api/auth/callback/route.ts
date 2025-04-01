@@ -1,17 +1,13 @@
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-
-export const runtime = 'edge';
 
 // OAuth 配置
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
-let OAUTH_CLIENT_ID = process.env.CLOUDFLARE_OAUTH_CLIENT_ID;
-const OAUTH_REDIRECT_URI = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback`;
+// 使用硬編碼的 client ID，確保與 KV 中的一致
+const OAUTH_CLIENT_ID = 'plh3kJVTXu8kZFDI';
+// 使用硬編碼的 redirect URI，確保與 KV 中的一致
+// 確保這個 URI 與實際部署環境匹配
+const OAUTH_REDIRECT_URI = 'https://ethglobal-tpe.pages.dev/api/auth/callback';
 
-// 从全局状态获取 client_id（如果已注册）
-if (global.registeredClientId) {
-  OAUTH_CLIENT_ID = global.registeredClientId;
-}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -23,49 +19,70 @@ export async function GET(request: Request) {
   }
   
   try {
-    // 交換授權碼獲取訪問令牌
+    console.log('Exchanging code for token with params:', {
+      code: code?.substring(0, 10) + '...',
+      client_id: OAUTH_CLIENT_ID,
+      redirect_uri: OAUTH_REDIRECT_URI
+    });
+    
+    // 直接使用授權碼，不進行額外處理
     const tokenResponse = await fetch(`${MCP_SERVER_URL}/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
       },
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        client_id: OAUTH_CLIENT_ID!,
+        client_id: OAUTH_CLIENT_ID,
         redirect_uri: OAUTH_REDIRECT_URI,
       }).toString(),
     });
     
+    // 檢查響應狀態
     if (!tokenResponse.ok) {
-      const error = await tokenResponse.text();
-      throw new Error(`Token exchange failed: ${error}`);
+      const errorText = await tokenResponse.text();
+      console.error(`Token exchange failed: Status ${tokenResponse.status}, Response: ${errorText}`);
+      // 返回更詳細的錯誤信息
+      return NextResponse.redirect(
+        new URL(`/?error=token_exchange_failed&status=${tokenResponse.status}&details=${encodeURIComponent(errorText)}`, request.url)
+      );
     }
     
-    const tokenData = await tokenResponse.json();
+    // 解析令牌數據
+    let tokenData;
+    try {
+      tokenData = await tokenResponse.json();
+    } catch (e) {
+      console.error('Failed to parse token response:', e);
+      return NextResponse.redirect(new URL(`/?error=invalid_token_response`, request.url));
+    }
+    
     const { access_token, refresh_token, expires_in } = tokenData;
     
-    // 將令牌存儲在 HTTP-only cookie 中
-    (await cookies()).set('cf_access_token', access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: expires_in,
-      path: '/',
-    });
+    // 創建重定向響應
+    const response = NextResponse.redirect(new URL('/chat', request.url));
+    
+    // 簡化 cookie 設置
+    response.headers.set(
+      'Set-Cookie', 
+      `cf_access_token=${access_token}; Path=/; HttpOnly; Secure; Max-Age=${expires_in}`
+    );
     
     if (refresh_token) {
-      (await cookies()).set('cf_refresh_token', refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 30 * 24 * 60 * 60, // 30天
-        path: '/',
-      });
+      response.headers.append(
+        'Set-Cookie', 
+        `cf_refresh_token=${refresh_token}; Path=/; HttpOnly; Secure; Max-Age=${30 * 24 * 60 * 60}`
+      );
     }
     
-    // 重定向回應用
-    return NextResponse.redirect(new URL('/chat', request.url));
+    return response;
   } catch (error) {
     console.error('OAuth error:', error);
-    return NextResponse.redirect(new URL(`/?error=oauth_failure`, request.url));
+    // 返回更詳細的錯誤信息
+    return NextResponse.redirect(
+      new URL(`/?error=oauth_failure&message=${encodeURIComponent(String(error))}`, request.url)
+    );
   }
 }

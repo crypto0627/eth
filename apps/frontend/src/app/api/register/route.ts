@@ -8,8 +8,6 @@ declare global {
   var registeredClientId: string | undefined;
 }
 
-export const runtime = "edge";
-
 export async function GET() {
   try {
     // Return cached client_id if available
@@ -21,9 +19,9 @@ export async function GET() {
     }
     
     const registrationData = {
-      redirect_uris: [`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/callback`],
+      redirect_uris: ['https://ethglobal-tpe.pages.dev/api/auth/callback'],
       client_name: "Next.js MCP Client",
-      client_uri: process.env.NEXT_PUBLIC_BASE_URL,
+      client_uri: 'https://ethglobal-tpe.pages.dev/',
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],
       token_endpoint_auth_method: "none"

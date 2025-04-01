@@ -1,5 +1,4 @@
 import type { NextConfig } from 'next'
-import { setupDevPlatform } from '@cloudflare/next-on-pages/next-dev';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -14,10 +13,10 @@ const nextConfig: NextConfig = {
       sizeLimit: '1mb',
     },
   },
-}
-
-if (process.env.NODE_ENV === 'development') {
-  await setupDevPlatform();
+  env: {
+    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+    MCP_CLIENT_ID: process.env.MCP_CLIENT_ID,
+  },
 }
 
 export default nextConfig

@@ -22,46 +22,46 @@ export default function Home() {
   const { disconnect } = useDisconnect()
   const { chains, switchChain } = useSwitchChain()
 
-  // USDC token addresses by chain ID
-  const usdcAddresses: Record<number, `0x${string}`> = {
-    84532: '0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // Base Sepolia
-    11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Ethereum Sepolia
-  };
+  // // USDC token addresses by chain ID
+  // const usdcAddresses: Record<number, `0x${string}`> = {
+  //   84532: '0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // Base Sepolia
+  //   11155111: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238', // Ethereum Sepolia
+  // };
 
-  useEffect(() => {
-    if (!account.address) return;
+  // useEffect(() => {
+  //   if (!account.address) return;
     
-    async function fetchUSDCBalances() {
-      const balancePromises = Object.entries(usdcAddresses).map(
-        async ([chainId, tokenAddress]) => {
-          try {
-            const balance = await getBalance(config, {
-              address: account.address as `0x${string}`,
-              token: tokenAddress,
-              chainId: Number(chainId) as 84532 | 11155111 | 43113 | undefined,
-            });
+  //   async function fetchUSDCBalances() {
+  //     const balancePromises = Object.entries(usdcAddresses).map(
+  //       async ([chainId, tokenAddress]) => {
+  //         try {
+  //           const balance = await getBalance(config, {
+  //             address: account.address as `0x${string}`,
+  //             token: tokenAddress,
+  //             chainId: Number(chainId) as 84532 | 11155111 | 43113 | undefined,
+  //           });
             
-            return {
-              chainId: Number(chainId),
-              balance,
-            };
-          } catch (error) {
-            console.error(`Error fetching balance for chain ${chainId}:`, error);
-            return {
-              chainId: Number(chainId),
-              balance: 'Error',
-              symbol: 'USDC',
-            };
-          }
-        }
-      );
+  //           return {
+  //             chainId: Number(chainId),
+  //             balance,
+  //           };
+  //         } catch (error) {
+  //           console.error(`Error fetching balance for chain ${chainId}:`, error);
+  //           return {
+  //             chainId: Number(chainId),
+  //             balance: 'Error',
+  //             symbol: 'USDC',
+  //           };
+  //         }
+  //       }
+  //     );
     
-      const balances = await Promise.all(balancePromises);
-      setUSDCBalance(balances as any);
-    }
+  //     const balances = await Promise.all(balancePromises);
+  //     setUSDCBalance(balances as any);
+  //   }
     
-    fetchUSDCBalances();
-  }, [account.address]);
+  //   fetchUSDCBalances();
+  // }, [account.address]);
 
   const handleChainSwitch = (chainId: number) => {
     switchChain({ chainId });
