@@ -76,12 +76,60 @@ export default function McpClient() {
         </button>
       </form>
       
-      {messages.map((message, index) => (
-        <div key={index} className="border p-4 rounded-md bg-gray-50 mb-2">
-          <div className="font-semibold">{message.role === 'user' ? 'You:' : 'Assistant:'}</div>
-          <div>{message.content}</div>
-        </div>
-      ))}
+      {messages.map((message, index) => {
+        if (message.role === 'assistant' && message.content.includes('Top USDC loan pools')) {
+          const pools = message.content.split('---').filter(Boolean).map(pool => {
+            const lines = pool.trim().split('\n');
+            const poolData: Record<string, string> = {};
+            lines.forEach(line => {
+              const [key, value] = line.split(': ');
+              if (key && value) {
+                poolData[key.trim()] = value.trim();
+              }
+            });
+            return poolData;
+          });
+
+          return (
+            <div key={index} className="border p-4 rounded-md bg-gray-50 mb-2 overflow-x-auto">
+              <div className="font-semibold mb-2">Assistant:</div>
+              <table className="min-w-full table-auto">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="px-4 py-2">Project</th>
+                    <th className="px-4 py-2">Symbol</th>
+                    <th className="px-4 py-2">APY</th>
+                    <th className="px-4 py-2">Base APY</th>
+                    <th className="px-4 py-2">Reward APY</th>
+                    <th className="px-4 py-2">TVL</th>
+                    <th className="px-4 py-2">Risk Level</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pools.map((pool, i) => (
+                    <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <td className="border px-4 py-2">{pool['Project']}</td>
+                      <td className="border px-4 py-2">{pool['Symbol']}</td>
+                      <td className="border px-4 py-2">{pool['APY']}</td>
+                      <td className="border px-4 py-2">{pool['Base APY']}</td>
+                      <td className="border px-4 py-2">{pool['Reward APY']}</td>
+                      <td className="border px-4 py-2">{pool['TVL']}</td>
+                      <td className="border px-4 py-2">{pool['Risk Level']}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
+        
+        return (
+          <div key={index} className="border p-4 rounded-md bg-gray-50 mb-2">
+            <div className="font-semibold">{message.role === 'user' ? 'You:' : 'Assistant:'}</div>
+            <div>{message.content}</div>
+          </div>
+        );
+      })}
     </div>
   );
 }
