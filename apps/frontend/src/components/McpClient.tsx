@@ -27,7 +27,7 @@ export default function McpClient() {
         body: JSON.stringify({ prompt }),
       });
 
-      
+      console.log(res.json())
       if (!res.ok) {
         if (res.status === 401) {
           const data = await res.json();
@@ -40,7 +40,9 @@ export default function McpClient() {
       }
       
       const reader = res.body?.getReader();
+      console.log(reader)
       const decoder = new TextDecoder();
+      console.log(decoder)
       
       if (reader) {
         let done = false;
@@ -54,7 +56,7 @@ export default function McpClient() {
             const chunk = decoder.decode(value, { stream: true });
             text += chunk;
             setResponse(text);
-
+            console.log(text)
             try {
               const lines = text.split('\n');
               for (const line of lines) {
@@ -65,6 +67,7 @@ export default function McpClient() {
                   if (data.result?.content?.[0]?.text) {
                     const poolsData = parsePoolsData(data.result.content[0].text);
                     setParsedPools(poolsData);
+                    console.log(poolsData)
                   }
                 }
               }
