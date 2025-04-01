@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     MCP_CLIENT_ID: process.env.MCP_CLIENT_ID,
-  },
+  }
 }
 
 export default nextConfig

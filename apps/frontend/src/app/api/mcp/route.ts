@@ -2,6 +2,8 @@ import { experimental_createMCPClient, streamText } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { cookies } from 'next/headers';
 
+export const runtime = 'edge'
+
 // OAuth configuration
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
 const OAUTH_REDIRECT_URI = 'http://localhost:3001/api/auth/callback';
@@ -15,7 +17,6 @@ export async function POST(req: Request) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get('cf_access_token')?.value;
   
-  console.log(accessToken)
   if (!accessToken) {
     return Response.json({ 
       error: "authentication_required",
@@ -34,14 +35,14 @@ export async function POST(req: Request) {
       },
     });
     const toolSet = await sseClient.tools();
-    
+    console.log(toolSet)
     const response = await streamText({
       model: anthropic('claude-3-7-sonnet-20250219'),
       tools: toolSet,
       prompt,
       onFinish: () => sseClient.close(),
     });
-    
+    console.log(response.toDataStreamResponse())
     return response.toDataStreamResponse();
   } catch (error) {
     console.error('Error details:', error);
