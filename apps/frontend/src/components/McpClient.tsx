@@ -41,6 +41,16 @@ export default function McpClient() {
             window.location.href = data.authUrl;
             return;
           }
+        } else if (res.status === 500) {
+          try {
+            const errorData = await res.json();
+            if (errorData.error === "mcp_server_error" || errorData.error === "mcp_stream_error") {
+              throw new Error(errorData.message || "The MCP server encountered an error");
+            }
+          } catch (jsonError) {
+            // If we can't parse the error as JSON, just use the status text
+            console.error('Error parsing error response:', jsonError);
+          }
         }
         throw new Error(`Request failed with status ${res.status}`);
       }
