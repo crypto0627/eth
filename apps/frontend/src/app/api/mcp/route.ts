@@ -21,7 +21,12 @@ export async function POST(req: Request) {
       authUrl: `${MCP_SERVER_URL}/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(OAUTH_REDIRECT_URI)}&response_type=code`
     }, { status: 401 });
   }
-  console.log(cookieStore.get('cf_access_token')?.value)
+
+  // Set a timeout for the request
+  const TIMEOUT_MS = 60000; // 60 seconds timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  
   try {
     const sseClient = await experimental_createMCPClient({
       transport: {
@@ -32,59 +37,37 @@ export async function POST(req: Request) {
         },
       },
     });
-    const toolSet = await sseClient.tools();
-    console.log('Available tools:', toolSet);
     
-    try {
-      // 添加更多日誌來調試
-      console.log('Sending prompt to model:', prompt.substring(0, 100) + '...');
-      
-      const response = streamText({
-        model: anthropic('claude-3-7-sonnet-20250219'),
-        tools: toolSet,
-        prompt,
-        onFinish: () => {
-          console.log('Stream finished');
-          sseClient.close();
-        },
-      });
-      
-      // 不要嘗試直接記錄 Reader 對象
-      console.log('Streaming response created successfully', response.toDataStreamResponse());
-      
-      // 返回響應前添加調試信息
-      const streamResponse = response.toDataStreamResponse();
-      console.log('Response status:', streamResponse.status);
-      console.log('Response headers:', Object.fromEntries(streamResponse.headers.entries()));
-      
-      return streamResponse;
-    } catch (streamError) {
-      console.error('Error during streaming:', streamError);
-      sseClient.close();
-      
-      // 更詳細地記錄錯誤
-      if (streamError instanceof Error) {
-        console.error('Error name:', streamError.name);
-        console.error('Error message:', streamError.message);
-        console.error('Error stack:', streamError.stack);
-      } else {
-        console.error('Non-Error object thrown:', typeof streamError, streamError);
-      }
-      
-      // 檢查是否為 SSE 特定錯誤格式
-      if (typeof streamError === 'string' && streamError.includes('An error occurred')) {
-        const errorParts = streamError.split(':');
-        return Response.json({ 
-          error: "mcp_stream_error",
-          code: errorParts[0],
-          message: errorParts[1] || "Unknown streaming error"
-        }, { status: 500 });
-      }
-      
-      throw streamError; // 重新拋出以便外層 catch 處理
-    }
+    // Get tools with timeout
+    const toolSet = await Promise.race([
+      sseClient.tools(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Tools fetch timeout')), 10000)
+      )
+    ]);
+    
+    // Return the response directly without additional processing
+    return streamText({
+      model: anthropic('claude-3-7-sonnet-20250219'),
+      tools: toolSet as any, // Type assertion to resolve the type error
+      prompt,
+      onFinish: () => {
+        console.log('Stream finished');
+        sseClient.close();
+        clearTimeout(timeoutId);
+      },
+    }).toDataStreamResponse();
+    
   } catch (error) {
+    clearTimeout(timeoutId);
     console.error('Error details:', error);
+    
+    if (error.name === 'AbortError') {
+      return Response.json({ 
+        error: "request_timeout",
+        message: "The request took too long to process"
+      }, { status: 504 });
+    }
     
     // Handle token errors
     if (error.response?.status === 401 || error.message?.includes('unauthorized')) {
@@ -97,15 +80,9 @@ export async function POST(req: Request) {
       }, { status: 401 });
     }
     
-    // Handle SSE specific errors
-    if (error.message?.includes('An error occurred') || 
-        (typeof error === 'string' && error.includes('An error occurred'))) {
-      return Response.json({ 
-        error: "mcp_server_error",
-        message: "The MCP server encountered an error processing your request."
-      }, { status: 500 });
-    }
-    
-    return new Response(`Internal Server Error: ${error.message || 'Unknown error'}`, { status: 500 });
+    return Response.json({ 
+      error: "server_error",
+      message: error.message || "Unknown error occurred"
+    }, { status: 500 });
   }
 }
