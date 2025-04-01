@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       });
       
       // 不要嘗試直接記錄 Reader 對象
-      console.log('Streaming response created successfully');
+      console.log('Streaming response created successfully', response.toDataStreamResponse());
       
       // 返回響應前添加調試信息
       const streamResponse = response.toDataStreamResponse();
