@@ -2,14 +2,12 @@ import { experimental_createMCPClient, streamText } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { cookies } from 'next/headers';
 
-export const runtime = 'edge'
-
 // OAuth configuration
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
-const OAUTH_REDIRECT_URI = 'https://localhost:3001/api/auth/callback';
+const OAUTH_REDIRECT_URI = 'https://eth-frontend.vercel.app/api/auth/callback';
 
 // Client ID for OAuth
-const CLIENT_ID = 'nr6juLFC8fDKPeyx';
+const CLIENT_ID = 'DR7fyY0aU6qcxqD0';
 
 export async function POST(req: Request) {
   console.log('MCP api is called')

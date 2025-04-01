@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 
 // OAuth 配置
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
-const OAUTH_CLIENT_ID = 'nr6juLFC8fDKPeyx';
-const OAUTH_REDIRECT_URI = 'https://localhost:3001/api/auth/callback';
+const OAUTH_CLIENT_ID = 'DR7fyY0aU6qcxqD0';
+const OAUTH_REDIRECT_URI = 'https://eth-frontend.vercel.app/api/auth/callback';
 
 
 export async function GET(request: Request) {
