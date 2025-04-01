@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server';
 // OAuth 配置
 const MCP_SERVER_URL = 'https://mcp-remote-server.jake0627a1.workers.dev';
 // 使用硬編碼的 client ID，確保與 KV 中的一致
-const OAUTH_CLIENT_ID = 'nr6juLFC8fDKPeyx';
+const OAUTH_CLIENT_ID = 'DR7fyY0aU6qcxqD0';
 // 使用硬編碼的 redirect URI，確保與 KV 中的一致
 // 確保這個 URI 與實際部署環境匹配
-const OAUTH_REDIRECT_URI = 'http://localhost:3001/api/auth/callback';
+const OAUTH_REDIRECT_URI = 'https://eth-frontend.vercel.app/api/auth/callback';
 
 
 export async function GET(request: Request) {
