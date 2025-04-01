@@ -33,9 +33,4 @@ jobs:
         run: pnpm install
 
       - name: Build frontend
-        run: pnpm run pages:build
-        working-directory: apps/frontend
-      
-      - name: Deploy frontend
-        run: pnpm run pages:deploy
-        working-directory: apps/frontend
+        run: pnpm run build --filter=frontend

@@ -30,12 +30,12 @@ export class MyMCP extends McpAgent {
 		version: "1.0.0",
 	});
 
-	// Helper function for making API requests
+
 	private async makeApiRequest<T>(url: string): Promise<T | null> {
-		// 添加查詢參數來過濾
+
 		const queryParams = new URLSearchParams({
-			token: 'USDC',  // 只獲取 USDC
-			chains: 'Base,Ethereum,Avalanche'  // 只獲取特定鏈
+			token: 'USDC',
+			chains: 'Base,Ethereum,Avalanche'
 		});
 		
 		const fullUrl = `${url}?${queryParams}`;
@@ -221,7 +221,6 @@ export class MyMCP extends McpAgent {
 // Export the OAuth handler as the default
 export default new OAuthProvider({
 	apiRoute: "/sse",
-	// TODO: fix these types
 	// @ts-ignore
 	apiHandler: MyMCP.mount("/sse"),
 	// @ts-ignore
@@ -229,4 +228,16 @@ export default new OAuthProvider({
 	authorizeEndpoint: "/authorize",
 	tokenEndpoint: "/token",
 	clientRegistrationEndpoint: "/register",
+	allowedRedirectUris: [
+		'http://localhost:3001/api/auth/callback',
+		'https://eth-frontend.vercel.app/api/auth/callback'
+	],
+	corsOrigins: [
+		'http://localhost:3001',
+		'https://eth-frontend.vercel.app'
+	],
+	sseOptions: {
+		heartbeatInterval: 30000,
+		connectionTimeout: 120000,
+	}
 });

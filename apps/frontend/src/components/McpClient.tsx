@@ -9,18 +9,24 @@ export default function McpClient() {
   const [error, setError] = useState<string | null>(null);
   const [parsedPools, setParsedPools] = useState<any[]>([]);
   const [responseReady, setResponseReady] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  
+  const addDebugInfo = (info: string) => {
+    setDebugInfo(prev => [...prev, `[${new Date().toISOString()}] ${info}`]);
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted with prompt:', prompt);
+    addDebugInfo('Form submitted with prompt: ' + prompt.substring(0, 50) + '...');
     setLoading(true);
     setError(null);
     setResponse('');
     setParsedPools([]);
     setResponseReady(false);
+    setDebugInfo([]);
     
     try {
-      console.log('Sending fetch request to /api/mcp');
+      addDebugInfo('Sending fetch request to /api/mcp');
       const res = await fetch('/api/mcp', {
         method: 'POST',
         headers: {
@@ -29,33 +35,34 @@ export default function McpClient() {
         body: JSON.stringify({ prompt }),
       });
 
-      console.log('Response received:', res.status, res.statusText);
+      addDebugInfo(`Response received: ${res.status} ${res.statusText}`);
       
       if (!res.ok) {
         if (res.status === 401) {
-          console.log('Authentication required (401)');
+          addDebugInfo('Authentication required (401)');
           const data = await res.json();
-          console.log('Auth response data:', data);
+          addDebugInfo('Auth response data: ' + JSON.stringify(data));
           if (data.authUrl) {
-            console.log('Redirecting to auth URL:', data.authUrl);
+            addDebugInfo('Redirecting to auth URL: ' + data.authUrl);
             window.location.href = data.authUrl;
             return;
           }
         } else if (res.status === 500) {
           try {
             const errorData = await res.json();
+            addDebugInfo('Error data: ' + JSON.stringify(errorData));
             if (errorData.error === "mcp_server_error" || errorData.error === "mcp_stream_error") {
               throw new Error(errorData.message || "The MCP server encountered an error");
             }
           } catch (jsonError) {
             // If we can't parse the error as JSON, just use the status text
-            console.error('Error parsing error response:', jsonError);
+            addDebugInfo('Error parsing error response: ' + jsonError);
           }
         }
         throw new Error(`Request failed with status ${res.status}`);
       }
       
-      console.log('Getting reader from response body');
+      addDebugInfo('Getting reader from response body');
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       
@@ -63,8 +70,9 @@ export default function McpClient() {
         let done = false;
         let text = '';
         let chunkCount = 0;
+        let rawChunks = [];
         
-        console.log('Starting to read stream');
+        addDebugInfo('Starting to read stream');
         while (!done) {
           const { value, done: doneReading } = await reader.read();
           done = doneReading;
@@ -72,64 +80,71 @@ export default function McpClient() {
           if (value) {
             chunkCount++;
             const chunk = decoder.decode(value, { stream: true });
-            console.log(`Received chunk #${chunkCount}:`, chunk.substring(0, 50) + (chunk.length > 50 ? '...' : ''));
-            text += chunk;
+            rawChunks.push(chunk);
+            addDebugInfo(`Received chunk #${chunkCount}: ${chunk.substring(0, 50).replace(/\n/g, '\\n')}${chunk.length > 50 ? '...' : ''}`);
             
-            // Check for error message in the stream
-            if (text.includes('"An error occurred."')) {
-              console.error('MCP server returned an error in the stream');
+            // Check for error patterns in the chunk
+            if (chunk.includes('3:"An error occurred"') || chunk.includes('"An error occurred."')) {
+              addDebugInfo('ERROR DETECTED in chunk: ' + chunk);
               throw new Error('The MCP server encountered an error processing your request.');
             }
             
+            text += chunk;
             setResponse(text);
             
             try {
               const lines = text.split('\n');
               for (const line of lines) {
                 if (line.startsWith('a:') && line.includes('result')) {
-                  console.log('Found result line:', line.substring(0, 50) + '...');
+                  addDebugInfo('Found result line: ' + line.substring(0, 50) + '...');
                   const jsonStr = line.substring(2);
                   const data = JSON.parse(jsonStr);
                   if (data.result?.content?.[0]?.text) {
-                    console.log('Parsing pools data from response');
+                    addDebugInfo('Parsing pools data from response');
                     const poolsData = parsePoolsData(data.result.content[0].text);
-                    console.log('Parsed pools:', poolsData.length);
+                    addDebugInfo('Parsed pools: ' + poolsData.length);
                     setParsedPools(poolsData);
                   }
                 }
               }
             } catch (parseErr) {
-              console.error('Error parsing pools data:', parseErr);
+              addDebugInfo('Error parsing pools data: ' + parseErr);
             }
           }
         }
         
-        console.log('Stream reading complete');
+        addDebugInfo('Stream reading complete');
+        
+        // For debugging, analyze all raw chunks
+        if (parsedPools.length === 0) {
+          addDebugInfo('No pools parsed, raw chunks: ' + JSON.stringify(rawChunks));
+        }
+        
         setResponseReady(true);
       } else {
-        console.error('No reader available from response');
+        addDebugInfo('No reader available from response');
       }
     } catch (err) {
-      console.error('Error in handleSubmit:', err);
+      addDebugInfo('Error in handleSubmit: ' + err.message);
       setError(err.message || 'An error occurred');
     } finally {
-      console.log('Request handling complete');
+      addDebugInfo('Request handling complete');
       setLoading(false);
     }
   };
   
   const parsePoolsData = (text: string): any[] => {
-    console.log('Parsing pools data from text:', text.substring(0, 100) + '...');
+    addDebugInfo('Parsing pools data from text: ' + text.substring(0, 100) + '...');
     const pools = [];
     const poolsText = text.split('---');
-    console.log(`Found ${poolsText.length} pool sections`);
+    addDebugInfo(`Found ${poolsText.length} pool sections`);
     
     for (const poolText of poolsText) {
       if (!poolText.trim()) continue;
       
       const pool: Record<string, string> = {};
       const lines = poolText.trim().split('\n');
-      console.log(`Processing pool with ${lines.length} lines`);
+      addDebugInfo(`Processing pool with ${lines.length} lines`);
       
       for (const line of lines) {
         if (line.includes(':')) {
@@ -139,12 +154,12 @@ export default function McpClient() {
       }
       
       if (Object.keys(pool).length > 0) {
-        console.log('Added pool:', pool);
+        addDebugInfo('Added pool: ' + JSON.stringify(pool));
         pools.push(pool);
       }
     }
     
-    console.log(`Returning ${pools.length} parsed pools`);
+    addDebugInfo(`Returning ${pools.length} parsed pools`);
     return pools;
   };
   
@@ -255,6 +270,25 @@ export default function McpClient() {
           <div className="whitespace-pre-wrap">{response}</div>
         </div>
       ) : null}
+      
+      {/* Debug Information Panel */}
+      <div className="mt-6 border p-4 rounded-md bg-gray-50">
+        <h2 className="text-lg font-semibold mb-2 flex items-center justify-between">
+          Debug Information
+          <button 
+            onClick={() => navigator.clipboard.writeText(debugInfo.join('\n'))}
+            className="text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300"
+          >
+            Copy
+          </button>
+        </h2>
+        <div className="h-64 overflow-y-auto bg-gray-800 text-green-400 p-2 rounded font-mono text-xs">
+          {debugInfo.length > 0 ? 
+            debugInfo.map((info, i) => <div key={i}>{info}</div>) : 
+            <div>No debug information available</div>
+          }
+        </div>
+      </div>
     </div>
   );
 }
