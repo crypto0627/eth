@@ -29,11 +29,13 @@ export default function McpClient() {
   const [dataLoading, setDataLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [streamingContent, setStreamingContent] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setDataLoading(true);
+    setStreamingContent('');
     
     try {
       const res = await fetch('/api/mcp', {
@@ -51,24 +53,46 @@ export default function McpClient() {
             window.location.href = data.authUrl;
             return;
           }
-        } else {
-          throw new Error(`Request failed with status ${res.status}`);
+        }
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No reader available');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // Convert the chunk to text
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim());
+
+        for (const line of lines) {
+          if (line.startsWith('0:')) {
+            // Streaming content
+            const content = line.slice(2);
+            setStreamingContent(prev => prev + content);
+          } else if (line.startsWith('a:')) {
+            // Tool call result
+            const resultData = JSON.parse(line.slice(2));
+            setStreamingContent(prev => prev + '\n\n' + resultData.result.content[0].text);
+          }
         }
       }
 
-      const data = await res.json();
       setMessages(prev => [...prev, {
         role: 'user',
         content: input
       }, {
         role: 'assistant',
-        content: data.result?.content[0]?.text || 'No content available',
-        ...data
+        content: streamingContent
       }]);
       setInput('');
 
     } catch (err) {
-      console.error(err);
+      console.error('Error:', err instanceof Error ? err.message : String(err));
+      setStreamingContent('Error: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
       setTimeout(() => setDataLoading(false), 500);
@@ -81,19 +105,9 @@ export default function McpClient() {
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
     </svg>
   );
-
-  const TableLoadingSpinner = () => (
-    <div className="flex justify-center items-center p-8">
-      <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      <span className="ml-2 text-blue-600">Loading data...</span>
-    </div>
-  );
   
   return (
-    <div className="max-w-2xl mx-auto p-4">
+    <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Loan Pool Assistant</h1>
       
       <form onSubmit={handleSubmit} className="mb-4">
@@ -121,65 +135,21 @@ export default function McpClient() {
           ) : 'Submit'}
         </button>
       </form>
-      
-      {messages.map((message, index) => {
-        if (message.role === 'assistant' && message.content.includes('Top USDC loan pools')) {
-          const pools = message.content.split('---').filter(Boolean).map(pool => {
-            const lines = pool.trim().split('\n');
-            const poolData: Record<string, string> = {};
-            lines.forEach(line => {
-              const [key, value] = line.split(': ');
-              if (key && value) {
-                poolData[key.trim()] = value.trim();
-              }
-            });
-            return poolData;
-          });
 
-          return (
-            <div key={index} className="border p-4 rounded-md bg-gray-50 mb-2 overflow-x-auto">
-              <div className="font-semibold mb-2">Assistant:</div>
-              {dataLoading ? (
-                <TableLoadingSpinner />
-              ) : (
-                <table className="min-w-full table-auto">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="px-4 py-2">Project</th>
-                      <th className="px-4 py-2">Symbol</th>
-                      <th className="px-4 py-2">APY</th>
-                      <th className="px-4 py-2">Base APY</th>
-                      <th className="px-4 py-2">Reward APY</th>
-                      <th className="px-4 py-2">TVL</th>
-                      <th className="px-4 py-2">Risk Level</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pools.map((pool, i) => (
-                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="border px-4 py-2">{pool['Project']}</td>
-                        <td className="border px-4 py-2">{pool['Symbol']}</td>
-                        <td className="border px-4 py-2">{pool['APY']}</td>
-                        <td className="border px-4 py-2">{pool['Base APY']}</td>
-                        <td className="border px-4 py-2">{pool['Reward APY']}</td>
-                        <td className="border px-4 py-2">{pool['TVL']}</td>
-                        <td className="border px-4 py-2">{pool['Risk Level']}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          );
-        }
-        
-        return (
-          <div key={index} className="border p-4 rounded-md bg-gray-50 mb-2">
-            <div className="font-semibold">{message.role === 'user' ? 'You:' : 'Assistant:'}</div>
-            <div>{message.content}</div>
-          </div>
-        );
-      })}
+      {/* Display streaming content */}
+      {streamingContent && (
+        <div className="mb-4 p-4 bg-gray-100 rounded-md">
+          <pre className="whitespace-pre-wrap">{streamingContent}</pre>
+        </div>
+      )}
+      
+      {/* Display chat messages */}
+      {messages.map((message, index) => (
+        <div key={index} className="border p-4 rounded-md bg-gray-50 mb-2">
+          <div className="font-semibold">{message.role === 'user' ? 'You:' : 'Assistant:'}</div>
+          <pre className="whitespace-pre-wrap">{message.content}</pre>
+        </div>
+      ))}
     </div>
   );
 }
