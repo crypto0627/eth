@@ -12,6 +12,7 @@ export default function McpClient() {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted with prompt:', prompt);
     setLoading(true);
     setError(null);
     setResponse('');
@@ -19,6 +20,7 @@ export default function McpClient() {
     setResponseReady(false);
     
     try {
+      console.log('Sending fetch request to /api/mcp');
       const res = await fetch('/api/mcp', {
         method: 'POST',
         headers: {
@@ -27,11 +29,15 @@ export default function McpClient() {
         body: JSON.stringify({ prompt }),
       });
 
-      console.log(res.json())
+      console.log('Response received:', res.status, res.statusText);
+      
       if (!res.ok) {
         if (res.status === 401) {
+          console.log('Authentication required (401)');
           const data = await res.json();
+          console.log('Auth response data:', data);
           if (data.authUrl) {
+            console.log('Redirecting to auth URL:', data.authUrl);
             window.location.href = data.authUrl;
             return;
           }
@@ -39,35 +45,39 @@ export default function McpClient() {
         throw new Error(`Request failed with status ${res.status}`);
       }
       
+      console.log('Getting reader from response body');
       const reader = res.body?.getReader();
-      console.log(reader)
       const decoder = new TextDecoder();
-      console.log(decoder)
       
       if (reader) {
         let done = false;
         let text = '';
+        let chunkCount = 0;
         
+        console.log('Starting to read stream');
         while (!done) {
           const { value, done: doneReading } = await reader.read();
           done = doneReading;
           
           if (value) {
+            chunkCount++;
             const chunk = decoder.decode(value, { stream: true });
+            console.log(`Received chunk #${chunkCount}:`, chunk.substring(0, 50) + (chunk.length > 50 ? '...' : ''));
             text += chunk;
             setResponse(text);
-            console.log(text)
+            
             try {
               const lines = text.split('\n');
               for (const line of lines) {
                 if (line.startsWith('a:') && line.includes('result')) {
+                  console.log('Found result line:', line.substring(0, 50) + '...');
                   const jsonStr = line.substring(2);
                   const data = JSON.parse(jsonStr);
-                  console.log(data)
                   if (data.result?.content?.[0]?.text) {
+                    console.log('Parsing pools data from response');
                     const poolsData = parsePoolsData(data.result.content[0].text);
+                    console.log('Parsed pools:', poolsData.length);
                     setParsedPools(poolsData);
-                    console.log(poolsData)
                   }
                 }
               }
@@ -77,24 +87,32 @@ export default function McpClient() {
           }
         }
         
+        console.log('Stream reading complete');
         setResponseReady(true);
+      } else {
+        console.error('No reader available from response');
       }
     } catch (err) {
+      console.error('Error in handleSubmit:', err);
       setError(err.message || 'An error occurred');
     } finally {
+      console.log('Request handling complete');
       setLoading(false);
     }
   };
   
   const parsePoolsData = (text: string): any[] => {
+    console.log('Parsing pools data from text:', text.substring(0, 100) + '...');
     const pools = [];
     const poolsText = text.split('---');
+    console.log(`Found ${poolsText.length} pool sections`);
     
     for (const poolText of poolsText) {
       if (!poolText.trim()) continue;
       
       const pool: Record<string, string> = {};
       const lines = poolText.trim().split('\n');
+      console.log(`Processing pool with ${lines.length} lines`);
       
       for (const line of lines) {
         if (line.includes(':')) {
@@ -104,10 +122,12 @@ export default function McpClient() {
       }
       
       if (Object.keys(pool).length > 0) {
+        console.log('Added pool:', pool);
         pools.push(pool);
       }
     }
     
+    console.log(`Returning ${pools.length} parsed pools`);
     return pools;
   };
   
