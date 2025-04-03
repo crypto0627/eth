@@ -38,12 +38,8 @@ export default function Business() {
     <section id="features" className={layout.section}>
       <div className={layout.sectionInfo}>
         <h2 className={styles.heading2}>
-          We make live stream donating simple.
+          We make USDC payments simple
         </h2>
-
-        <Link href="/launch">
-          <Button styles={`mt-10`} />
-        </Link>
       </div>
 
       <div className={`${layout.sectionImg} flex-col items-left`}>

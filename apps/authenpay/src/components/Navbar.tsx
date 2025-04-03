@@ -1,40 +1,36 @@
 'use client'
 
 import { useState } from 'react'
-import { close, logo, menu } from '../assets'
-import { navLinks } from '../constants'
-import { navLinksTypes } from '@/types/ui.type'
-import { useRouter } from 'next/navigation'
+import { close, menu } from '../assets'
 import Image from 'next/image'
 import Link from 'next/link'
 
 export default function Navbar() {
   const [active, setActive] = useState<string>('Home')
   const [toggle, setToggle] = useState<boolean>(false)
-  const router = useRouter()
+  
+  const navLinks = [
+    {"id": "home", "title": "Home", "link": "/"},
+    {"id": "github", "title": "Github", "link": "https://www.github.com/authenpay"},
+    {"id": "launch", "title": "Launch App", "link": "/launch"},
+  ]
 
   return (
     <nav className="w-full flex py-6 justify-between items-center navbar">
-      <Image src={logo} alt="Authenpay" width={248} height={64} />
+      <div className="flex flex-row items-center text-center">
+        <Image src="/logo.png" alt="Authenpay" width={60} height={60} />
+        <h1 className="text-2xl font-bold">AuthenPay</h1>
+      </div>
 
       <ul className="list-none sm:flex hidden justify-end items-center flex-1">
-        {navLinks.map((nav: navLinksTypes, index) => (
+        {navLinks.map((nav, index) => (
           <li
             key={nav.id}
             className={`font-poppins font-normal cursor-pointer text-[16px] ${
               active === nav.title ? 'text-white' : 'text-dimWhite'
             } ${index === navLinks.length - 1 ? 'mr-0' : 'mr-10'}`}
-            onClick={() => {
-              if (index === 1) {
-                window.open('https://github.com/hollow-leaf/psyduck', '_blank')
-              } else if (index === 2) {
-                router.push('/launch')
-              } else {
-                setActive(nav.title)
-              }
-            }}
           >
-            <a href={index === 0 ? `#${nav.id}` : undefined}>{nav.title}</a>
+            <Link href={nav.link}>{nav.title}</Link>
           </li>
         ))}
       </ul>
@@ -65,9 +61,22 @@ export default function Navbar() {
                 className={`font-poppins font-medium cursor-pointer text-[16px] ${
                   active === nav.title ? 'text-white' : 'text-dimWhite'
                 } ${index === navLinks.length - 1 ? 'mb-0' : 'mb-4'}`}
-                onClick={() => setActive(nav.title)}
               >
-                <Link href={`#${nav.id}`}>{nav.title}</Link>
+                {index === 0 && (
+                  <Link href={`#${nav.id}`} onClick={() => setActive(nav.title)}>
+                    {nav.title}
+                  </Link>
+                )}
+                {index === 1 && (
+                  <a href="https://github.com/hollow-leaf/psyduck" target="_blank">
+                    {nav.title}
+                  </a>
+                )}
+                {index === 2 && (
+                  <Link href="/launch">
+                    {nav.title}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

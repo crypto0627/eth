@@ -11,7 +11,7 @@ export interface featureTypes {
   content: string
 }
 
-export interface feedbackTypes {
+export interface teamTypes {
   id: string
   content: string
   name: string

@@ -1,6 +1,6 @@
 import React from 'react'
 import styles from '@/app/style'
-import { discount, streamer } from '@/assets'
+import { streamer } from '@/assets'
 import GetStarted from '@/components/GetStarted'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -17,26 +17,19 @@ export default function Hero() {
         <div className="flex flex-row justify-between items-center w-full">
           <h1 className="flex-1 font-poppins font-semibold ss:text-[72px] text-[52px] text-white ss:leading-[100.8px] leading-[75px]">
             The Next <br className="sm:block hidden" />{' '}
-            <span className="text-gradient">Web3</span>{' '}
+            <span className="text-gradient">USDC</span>{' '}
           </h1>
-          <div className="ss:flex hidden md:mr-4 mr-0">
-            <Link href="/launch">
-              <GetStarted />
-            </Link>
-          </div>
         </div>
 
         <h1 className="font-poppins font-semibold ss:text-[68px] text-[52px] text-white ss:leading-[100.8px] leading-[75px] w-full">
-          Donation Platform.
+          Payment Wallet
         </h1>
         <p className={`${styles.paragraph} max-w-[470px] mt-5`}>
-          Revolutionizing donation culture on live streaming platforms. Empower
-          streamers to launch ERC-1155 NFTs, enabling viewers to support content
-          creators directly through Web3 wallets.
+          Provides Web2 app-like operations to trade USDC across chains, allowing users to easily send, receive, and exchange USDC between Base, Ethereum, and Avalanche.
         </p>
       </div>
 
-      <Link href="/launch">
+      <Link href="/launch" className="lg:flex hidden md:mr-4 mr-0">
         <GetStarted />
       </Link>
 
@@ -44,15 +37,19 @@ export default function Hero() {
         className={`flex-1 flex ${styles.flexCenter} md:my-1 my-10 relative`}
       >
         <Image
-          src={streamer}
-          alt="streamer"
+          src="/hero.png"
+          alt="hero"
           className="w-[100%] h-[90%] relative z-[6]"
+          width={1000}
+          height={1000}
         />
 
         {/* gradient start */}
-        <div className="absolute z-[0] w-[40%] h-[35%] top-0 pink__gradient" />
-        <div className="absolute z-[1] w-[80%] h-[80%] rounded-full white__gradient bottom-40" />
-        <div className="absolute z-[0] w-[50%] h-[50%] right-20 bottom-20 blue__gradient" />
+        <div className="absolute z-[0] w-[45%] h-[40%] top-0 left-0 blue__gradient animate-pulse" />
+        <div className="absolute z-[1] w-[85%] h-[85%] rounded-full white__gradient bottom-40 opacity-70 blur-xl" />
+        <div className="absolute z-[0] w-[55%] h-[55%] right-20 bottom-20 blue__gradient animate-float" />
+        <div className="absolute z-[2] w-[30%] h-[30%] left-20 top-40 purple__gradient opacity-60" />
+        <div className="absolute z-[1] w-[25%] h-[25%] right-10 top-10 yellow__gradient animate-pulse" />
         {/* gradient end */}
       </div>
     </section>

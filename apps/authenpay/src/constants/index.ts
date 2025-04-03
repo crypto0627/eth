@@ -1,17 +1,11 @@
 import {
   people01,
   people02,
-  people03,
-  people04,
-  people05,
   github,
-  airbnb,
-  binance,
-  coinbase,
-  dropbox,
   send,
   shield,
-  star
+  star,
+  userFriendly
 } from '../assets'
 
 export const navLinks = [
@@ -32,44 +26,44 @@ export const navLinks = [
 export const features = [
   {
     id: 'feature-1',
-    icon: star,
-    title: 'Enhanced Engagement',
+    icon: shield,
+    title: 'Cross-chain transfers supported by USDC',
     content:
-      'Facilitates meaningful viewer-streamer connections via ERC-1155 token donations.'
+      'Easily send and receive USDC via QR code and securely cross-chain transfer USDC between supported blockchains using Circle CCTP V2, ensuring secure asset transfers.'
   },
   {
     id: 'feature-2',
-    icon: shield,
-    title: 'Diverse Revenue',
-    content: 'Offers creators new monetization methods.'
+    icon: star,
+    title: 'Multi-Chain Support',
+    content: 'Easily manage USDC balances between Base, Ethereum, and Avalanche with real-time tracking.'
   },
   {
     id: 'feature-3',
     icon: send,
-    title: 'Secure Transactions',
-    content: 'Ensures transparency and security with blockchain technology.'
+    title: 'On-Chain Transaction Tracking',
+    content: 'Use 1inch API to track historical transactions, making it as easy for users to operate as using Web2 app.'
   },
   {
     id: 'feature-4',
-    icon: star,
-    title: 'User-Friendly',
-    content: 'Easy integration with a simple interface for users.'
+    icon: userFriendly,
+    title: 'Seamless web3 payment experience',
+    content: 'Provide wallet-free USDC transactions through EIP-4337. Combined with WebSocket listening and 1inch API tracking, it creates a smooth and secure Web3 payment experience.'
   }
 ]
 
-export const feedback = [
+export const teams = [
   {
-    id: 'feedback-1',
+    id: 'team-1',
     content: '',
     name: 'Solo Lin',
-    title: 'Cathay Financial Holdings',
+    title: 'Fullstack Developer',
     img: people01
   },
   {
-    id: 'feedback-2',
+    id: 'team-2',
     content: '',
     name: 'Jake Kuo',
-    title: 'Cathay Financial Holdings',
+    title: 'Fullstack Developer',
     img: people02
   }
 ]
@@ -163,24 +157,5 @@ export const socialMedia = [
     id: 'social-media-1',
     icon: github,
     link: 'https://github.com/hollow-leaf/psyduck'
-  }
-]
-
-export const clients = [
-  {
-    id: 'client-1',
-    logo: airbnb
-  },
-  {
-    id: 'client-2',
-    logo: binance
-  },
-  {
-    id: 'client-3',
-    logo: coinbase
-  },
-  {
-    id: 'client-4',
-    logo: dropbox
   }
 ]

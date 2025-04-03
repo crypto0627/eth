@@ -1,5 +1,5 @@
 import styles from './style'
-import { Business, CTA, Footer, Navbar, Testimonials, Hero } from '@/components'
+import { Business, CTA, Footer, Navbar, Teams, Hero } from '@/components'
 
 export default function App() {
   return (
@@ -19,7 +19,7 @@ export default function App() {
       <div className={`bg-primary ${styles.paddingX} ${styles.flexCenter}`}>
         <div className={`${styles.boxWidth}`}>
           <Business />
-          <Testimonials />
+          <Teams />
           <CTA />
           <Footer />
         </div>
