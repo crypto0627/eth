@@ -4,12 +4,18 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LoanProtocol } from '@/types'
-
 
 export default function MicroloansPage() {
   const [amount, setAmount] = useState<string>('100')
@@ -42,7 +48,9 @@ export default function MicroloansPage() {
   }
 
   const handleBorrow = (protocol: LoanProtocol) => {
-    alert(`Borrowing ${amount} USDC on ${protocol.project} with ${protocol.apy.toFixed(2)}% APY`)
+    alert(
+      `Borrowing ${amount} USDC on ${protocol.project} with ${protocol.apy.toFixed(2)}% APY`
+    )
     // Implement actual borrowing logic here
   }
 
@@ -64,12 +72,16 @@ export default function MicroloansPage() {
           <CardHeader>
             <CardTitle>Borrow USDC</CardTitle>
             <CardDescription>
-              Access liquidity from various DeFi protocols with competitive rates
+              Access liquidity from various DeFi protocols with competitive
+              rates
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label htmlFor="amount" className="block text-sm font-medium mb-1">
+              <label
+                htmlFor="amount"
+                className="block text-sm font-medium mb-1"
+              >
                 Amount (USDC)
               </label>
               <Input
@@ -82,8 +94,8 @@ export default function MicroloansPage() {
               />
             </div>
 
-            <Button 
-              onClick={handleAIRecommend} 
+            <Button
+              onClick={handleAIRecommend}
               className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
             >
               <Sparkles className="mr-2 h-4 w-4" />
@@ -116,47 +128,71 @@ export default function MicroloansPage() {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Recommended Protocols</h2>
             {protocols.map((protocol, index) => (
-              <Card key={index} className={`w-full ${index === 0 ? 'border-green-500 bg-green-50/10' : ''}`}>
+              <Card
+                key={index}
+                className={`w-full ${index === 0 ? 'border-green-500 bg-green-50/10' : ''}`}
+              >
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <CardTitle>{protocol.project}</CardTitle>
                     <div className="flex gap-2">
-                      {index === 0 && <Badge className="bg-green-500">Best Rate</Badge>}
-                      <Badge className={
-                        protocol.riskLevel === "Low Risk" ? "bg-blue-500" : 
-                        protocol.riskLevel === "Medium Risk" ? "bg-yellow-500" : 
-                        "bg-red-500"
-                      }>
+                      {index === 0 && (
+                        <Badge className="bg-green-500">Best Rate</Badge>
+                      )}
+                      <Badge
+                        className={
+                          protocol.riskLevel === 'Low Risk'
+                            ? 'bg-blue-500'
+                            : protocol.riskLevel === 'Medium Risk'
+                              ? 'bg-yellow-500'
+                              : 'bg-red-500'
+                        }
+                      >
                         {protocol.riskLevel}
                       </Badge>
                     </div>
                   </div>
-                  <CardDescription>{protocol.chain} - {protocol.symbol}</CardDescription>
+                  <CardDescription>
+                    {protocol.chain} - {protocol.symbol}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-sm text-gray-500">APY</p>
-                      <p className="text-2xl font-bold text-green-600">{protocol.apy.toFixed(2)}%</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {protocol.apy.toFixed(2)}%
+                      </p>
                       <div className="text-xs text-gray-500 mt-1">
                         <span>Base: {protocol.apyBase.toFixed(2)}%</span>
-                        {protocol.apyReward > 0 && <span> + Reward: {protocol.apyReward.toFixed(2)}%</span>}
+                        {protocol.apyReward > 0 && (
+                          <span>
+                            {' '}
+                            + Reward: {protocol.apyReward.toFixed(2)}%
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Total Value Locked</p>
-                      <p className="text-lg font-semibold">${(protocol.tvlUsd / 1000000).toFixed(2)}M</p>
+                      <p className="text-sm text-gray-500">
+                        Total Value Locked
+                      </p>
+                      <p className="text-lg font-semibold">
+                        ${(protocol.tvlUsd / 1000000).toFixed(2)}M
+                      </p>
                     </div>
                   </div>
                   {protocol.poolMeta && (
-                    <p className="mt-2 text-sm text-gray-500">{protocol.poolMeta}</p>
+                    <p className="mt-2 text-sm text-gray-500">
+                      {protocol.poolMeta}
+                    </p>
                   )}
                 </CardContent>
                 <CardFooter>
-                  <Button 
-                    onClick={() => handleBorrow(protocol)} 
+                  <Button
+                    onClick={() => handleBorrow(protocol)}
                     className="w-full"
-                    variant={index === 0 ? "default" : "outline"}
+                    variant={index === 0 ? 'default' : 'outline'}
                   >
                     Borrow {amount} USDC
                   </Button>

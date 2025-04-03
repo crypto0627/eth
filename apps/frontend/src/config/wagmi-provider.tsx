@@ -1,12 +1,9 @@
 'use client'
 
-import '@rainbow-me/rainbowkit/styles.css';
+import '@rainbow-me/rainbowkit/styles.css'
 
-import {
-  getDefaultConfig,
-  RainbowKitProvider,
-} from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
+import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { WagmiProvider } from 'wagmi'
 import {
   sepolia,
   celoAlfajores,
@@ -14,23 +11,28 @@ import {
   arbitrumSepolia,
   mainnet,
   base,
-  baseSepolia,
-} from 'wagmi/chains';
-import {
-  QueryClientProvider,
-  QueryClient,
-} from "@tanstack/react-query";
+  baseSepolia
+} from 'wagmi/chains'
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 
 const config = getDefaultConfig({
   appName: 'ethglobal',
   projectId: '4b5d5c41d68a989e0efe55cc8955e940',
-  chains: [sepolia, celoAlfajores, arbitrumSepolia, polygonMumbai, mainnet, base, baseSepolia],
-  ssr: true,
-});
+  chains: [
+    sepolia,
+    celoAlfajores,
+    arbitrumSepolia,
+    polygonMumbai,
+    mainnet,
+    base,
+    baseSepolia
+  ],
+  ssr: true
+})
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient()
 
-export default function Provider ({
+export default function Provider({
   children
 }: Readonly<{
   children: React.ReactNode
@@ -43,5 +45,5 @@ export default function Provider ({
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
-  );
-};
+  )
+}
